@@ -4,6 +4,7 @@ A React + Vite Hacker News aggregator built in two states:
 
 - `slow-version` contains the intentionally unoptimized baseline.
 - `main` contains the optimized implementation with parallel fetching, virtualization, memoization, image optimization, and code splitting.
+- If the live Hacker News API is unavailable in your environment, the app falls back to a deterministic 500-story data set so the UI still renders for validation.
 
 ## Run locally
 

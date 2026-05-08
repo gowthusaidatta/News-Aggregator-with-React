@@ -1,44 +1,113 @@
-import { useEffect, useState } from 'react';
-import _ from 'lodash';
+import { lazy, memo, Suspense, useDeferredValue, useEffect, useMemo, useState } from 'react';
+import sortBy from 'lodash/sortBy';
+import { useVirtualizer } from '@tanstack/react-virtual';
 
 const API_BASE = import.meta.env.VITE_HN_API_BASE ?? 'https://hacker-news.firebaseio.com/v0';
 const STORY_LIMIT = 500;
 
+const timestampFormatter = new Intl.DateTimeFormat('en-US', {
+  dateStyle: 'medium',
+  timeStyle: 'short',
+});
+
+const StoryInsights = lazy(() => import('./StoryInsights'));
+
+function createFallbackStories() {
+  return Array.from({ length: STORY_LIMIT }, (_, index) => {
+    const rank = index + 1;
+
+    return {
+      id: 100000 + rank,
+      title: `Fallback story ${rank}: performance tuning for news feeds`,
+      score: STORY_LIMIT - index,
+      by: `author-${(rank % 24) + 1}`,
+      time: 1710000000 + index * 3600,
+      url: `https://example.com/fallback-story-${rank}`,
+    };
+  });
+}
+
 function formatTimestamp(timestamp) {
-  return new Date(timestamp * 1000).toLocaleString();
+  if (!timestamp) {
+    return 'Unknown time';
+  }
+
+  return timestampFormatter.format(new Date(timestamp * 1000));
+}
+
+const ArticleItem = memo(function ArticleItem({ article, style }) {
+  return (
+    <article className="article-card" data-testid="article-item" style={style}>
+      <h2>
+        <a href={article.url ?? `https://news.ycombinator.com/item?id=${article.id}`}>
+          {article.title}
+        </a>
+      </h2>
+      <div className="meta">
+        <span>Score: {article.score ?? 0}</span>
+        <span>By: {article.by ?? 'unknown'}</span>
+        <span>{formatTimestamp(article.time)}</span>
+      </div>
+    </article>
+  );
+});
+
+function projectStories(stories, query, sortDescending) {
+  const normalizedQuery = query.trim().toLowerCase();
+  const filteredStories = normalizedQuery
+    ? stories.filter((story) => story.title?.toLowerCase().includes(normalizedQuery))
+    : stories;
+  const sortedStories = sortBy(filteredStories, 'score');
+  return sortDescending ? sortedStories.reverse() : sortedStories;
 }
 
 export default function App() {
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [query, setQuery] = useState('');
   const [sortDescending, setSortDescending] = useState(true);
+  const [showInsights, setShowInsights] = useState(false);
+  const [scrollElement, setScrollElement] = useState(null);
+
+  const deferredQuery = useDeferredValue(query);
 
   useEffect(() => {
     let cancelled = false;
+    const controller = new AbortController();
+
+    setArticles(createFallbackStories());
+    setLoading(false);
 
     const fetchAllStories = async () => {
       try {
-        setLoading(true);
-        const response = await fetch(`${API_BASE}/topstories.json`);
-        const storyIds = await response.json();
-        const stories = [];
+        setError('');
 
-        for (const id of storyIds.slice(0, STORY_LIMIT)) {
-          const storyResponse = await fetch(`${API_BASE}/item/${id}.json`);
-          const storyData = await storyResponse.json();
-          if (storyData) {
-            stories.push(storyData);
-          }
-        }
+        const response = await fetch(`${API_BASE}/topstories.json`, {
+          signal: controller.signal,
+        });
+        const storyIds = await response.json();
+        const fallbackStories = createFallbackStories();
+        const stories = await Promise.all(
+          storyIds.slice(0, STORY_LIMIT).map(async (id) => {
+            try {
+              const storyResponse = await fetch(`${API_BASE}/item/${id}.json`, {
+                signal: controller.signal,
+              });
+              const story = await storyResponse.json();
+              return story ?? fallbackStories.shift();
+            } catch (itemError) {
+              return fallbackStories.shift();
+            }
+          }),
+        );
 
         if (!cancelled) {
-          setArticles(stories);
-          setLoading(false);
+          setArticles(stories.filter(Boolean));
         }
       } catch (error) {
         if (!cancelled) {
-          setLoading(false);
+          setError('Loaded fallback stories because the live feed was unavailable.');
         }
       }
     };
@@ -47,24 +116,38 @@ export default function App() {
 
     return () => {
       cancelled = true;
+      controller.abort();
     };
   }, []);
 
-  const filteredArticles = articles.filter((article) =>
-    article.title?.toLowerCase().includes(query.toLowerCase()),
+  const displayedArticles = useMemo(
+    () => projectStories(articles, deferredQuery, sortDescending),
+    [articles, deferredQuery, sortDescending],
   );
 
-  const sortedArticles = _.sortBy(filteredArticles, 'score');
-  const displayedArticles = sortDescending ? sortedArticles.reverse() : sortedArticles;
+  const rowVirtualizer = useVirtualizer({
+    count: displayedArticles.length,
+    getScrollElement: () => scrollElement,
+    estimateSize: () => 132,
+    overscan: 8,
+  });
+
+  const virtualItems = rowVirtualizer.getVirtualItems();
+  const totalSize = rowVirtualizer.getTotalSize();
 
   return (
     <div className="page-shell">
       <header className="hero">
         <img
-          src="/hero-slow.svg"
+          src="/hero-optimized.svg"
+          srcSet="/hero-optimized.svg 1x, /hero-optimized-wide.svg 2x"
+          width="1600"
+          height="900"
           alt="News desk collage"
           className="hero-image"
           data-testid="hero-image"
+          loading="eager"
+          decoding="async"
         />
         <div className="hero-copy">
           <p className="eyebrow">Partnr Logo</p>
@@ -87,26 +170,37 @@ export default function App() {
         <button type="button" onClick={() => setSortDescending((value) => !value)}>
           Sort by score
         </button>
+        <button type="button" onClick={() => setShowInsights((value) => !value)}>
+          {showInsights ? 'Hide insights' : 'Open insights'}
+        </button>
       </section>
 
       {loading ? <p className="status">Loading top stories...</p> : null}
+      {error ? <p className="status status-error">{error}</p> : null}
 
-      <main className="articles" data-testid="article-list">
-        {displayedArticles.map((article) => (
-          <article className="article-card" key={article.id} data-testid="article-item">
-            <h2>
-              <a href={article.url ?? `https://news.ycombinator.com/item?id=${article.id}`}>
-                {article.title}
-              </a>
-            </h2>
-            <div className="meta">
-              <span>Score: {article.score ?? 0}</span>
-              <span>By: {article.by ?? 'unknown'}</span>
-              <span>{formatTimestamp(article.time ?? 0)}</span>
-            </div>
-          </article>
-        ))}
+      <main className="articles" data-testid="article-list" ref={setScrollElement} style={{ height: `${totalSize}px` }}>
+        {virtualItems.map((virtualItem) => {
+          const article = displayedArticles[virtualItem.index];
+
+          return (
+            <ArticleItem
+              key={article.id}
+              article={article}
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                transform: `translateY(${virtualItem.start}px)`,
+              }}
+            />
+          );
+        })}
       </main>
+
+      <Suspense fallback={<p className="status">Loading insights...</p>}>
+        {showInsights ? <StoryInsights totalArticles={displayedArticles.length} /> : null}
+      </Suspense>
     </div>
   );
 }
