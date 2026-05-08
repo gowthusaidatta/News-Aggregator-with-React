@@ -1,6 +1,6 @@
 import { lazy, memo, Suspense, useDeferredValue, useEffect, useMemo, useState } from 'react';
 import sortBy from 'lodash/sortBy';
-import { useVirtualizer } from '@tanstack/react-virtual';
+import { useWindowVirtualizer } from '@tanstack/react-virtual';
 
 const API_BASE = import.meta.env.VITE_HN_API_BASE ?? 'https://hacker-news.firebaseio.com/v0';
 const STORY_LIMIT = 500;
@@ -68,7 +68,6 @@ export default function App() {
   const [query, setQuery] = useState('');
   const [sortDescending, setSortDescending] = useState(true);
   const [showInsights, setShowInsights] = useState(false);
-  const [scrollElement, setScrollElement] = useState(null);
 
   const deferredQuery = useDeferredValue(query);
 
@@ -125,9 +124,8 @@ export default function App() {
     [articles, deferredQuery, sortDescending],
   );
 
-  const rowVirtualizer = useVirtualizer({
+  const rowVirtualizer = useWindowVirtualizer({
     count: displayedArticles.length,
-    getScrollElement: () => scrollElement,
     estimateSize: () => 132,
     overscan: 8,
   });
@@ -178,24 +176,26 @@ export default function App() {
       {loading ? <p className="status">Loading top stories...</p> : null}
       {error ? <p className="status status-error">{error}</p> : null}
 
-      <main className="articles" data-testid="article-list" ref={setScrollElement} style={{ height: `${totalSize}px` }}>
-        {virtualItems.map((virtualItem) => {
-          const article = displayedArticles[virtualItem.index];
+      <main className="articles" data-testid="article-list">
+        <div className="articles-spacer" style={{ height: `${totalSize}px` }}>
+          {virtualItems.map((virtualItem) => {
+            const article = displayedArticles[virtualItem.index];
 
-          return (
-            <ArticleItem
-              key={article.id}
-              article={article}
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                transform: `translateY(${virtualItem.start}px)`,
-              }}
-            />
-          );
-        })}
+            return (
+              <ArticleItem
+                key={article.id}
+                article={article}
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  transform: `translateY(${virtualItem.start}px)`,
+                }}
+              />
+            );
+          })}
+        </div>
       </main>
 
       <Suspense fallback={<p className="status">Loading insights...</p>}>
