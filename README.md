@@ -17,7 +17,7 @@ This project showcases building a news aggregator from an intentionally unoptimi
 - Fallback to cached data if API is unavailable
 
 ## Project Structure
-
+'''
 \\\
 News-Aggregator-with-React/
 ├── src/
@@ -39,7 +39,7 @@ News-Aggregator-with-React/
 ├── PERFORMANCE.md              # Performance optimization documentation
 └── README.md                   # This file
 \\\
-
+'''
 ## Quick Start
 
 ### Prerequisites
