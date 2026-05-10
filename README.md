@@ -1,206 +1,191 @@
-﻿# News Aggregator with React
+# News Aggregator with React
 
-A high-performance React + Vite news aggregator application demonstrating web performance optimization techniques and Core Web Vitals improvements.
+A high-performance **React + Vite** news aggregator application demonstrating modern web optimization techniques and Core Web Vitals improvements.
+
+---
 
 ## Project Overview
 
-This project showcases building a news aggregator from an intentionally unoptimized baseline to a highly optimized production-ready application. It fetches the top 500 stories from the Hacker News API and displays them with filtering, sorting, and responsive features.
+This project showcases the transformation of an intentionally unoptimized application into a highly optimized, production-ready React application.
 
-## Key Features
+The app fetches the **Top 500 Stories** from the Hacker News API and provides powerful filtering, sorting, and responsive UI features while focusing on performance optimization.
 
-- Fetch top 500 stories from Hacker News API
-- Real-time filtering by article title
+---
+
+## Features
+
+- Fetches top 500 stories from Hacker News API
+- Real-time search and filtering
 - Sort articles by score
-- Responsive, modern UI design
-- Performance monitoring and profiling tools
-- Docker containerization for easy deployment
-- Fallback to cached data if API is unavailable
+- Responsive modern UI
+- Lazy loading and code splitting
+- Performance monitoring tools
+- Docker containerization support
+- Fallback cached data support
+- Optimized Core Web Vitals
+
+---
+
+## Tech Stack
+
+### Frontend
+- React
+- Vite
+- CSS3
+
+### Tools & Optimization
+- Docker
+- Lighthouse
+- Performance Profiling
+- Lazy Loading
+- Code Splitting
+
+---
 
 ## Project Structure
-'''
-\\\
+
+```plaintext
 News-Aggregator-with-React/
+│
 ├── src/
-│   ├── App.jsx                 # Main app component with optimizations
-│   ├── StoryInsights.jsx       # Lazy-loaded insights panel
-│   ├── main.jsx                # React entry point
-│   └── styles.css              # Responsive styling
+│   ├── App.jsx
+│   ├── StoryInsights.jsx
+│   ├── main.jsx
+│   └── styles.css
+│
 ├── public/
-│   ├── hero-optimized.svg      # Optimized hero image
-│   ├── hero-optimized-wide.svg # 2x resolution variant
-│   └── hero-slow.svg           # Unoptimized version
+│   ├── hero-optimized.svg
+│   ├── hero-optimized-wide.svg
+│   └── hero-slow.svg
+│
 ├── scripts/
-│   └── generate-stats.mjs      # Bundle analysis script
-├── Dockerfile                  # Multi-stage production build
-├── docker-compose.yml          # Docker Compose configuration
-├── vite.config.js              # Vite build configuration
-├── package.json                # Dependencies and scripts
-├── .env.example                # Environment variables template
-├── PERFORMANCE.md              # Performance optimization documentation
-└── README.md                   # This file
-\\\
-'''
+│   └── generate-stats.mjs
+│
+├── Dockerfile
+├── docker-compose.yml
+├── vite.config.js
+├── package.json
+├── .env.example
+├── PERFORMANCE.md
+└── README.md
+```
+
+---
+
 ## Quick Start
 
 ### Prerequisites
 
+Make sure you have installed:
+
 - Node.js 18+
 - npm or yarn
-- Docker (optional, for containerized deployment)
+- Docker (optional)
 
-### Installation
+---
 
-1. Clone the repository
-\\\ash
+## Installation
+
+### Clone Repository
+
+```bash
 git clone https://github.com/gowthusaidatta/News-Aggregator-with-React.git
 cd News-Aggregator-with-React
-\\\
+```
 
-2. Install dependencies
-\\\ash
+### Install Dependencies
+
+```bash
 npm install
-\\\
+```
 
-3. Configure environment variables
-\\\ash
-cp .env.example .env
-\\\
+### Run Development Server
 
-### Development
-
-Run the optimized development server:
-\\\ash
+```bash
 npm run dev
-\\\
+```
 
-The app will be available at \http://localhost:5173\
+Application will run on:
 
-Compare with the unoptimized version:
-\\\ash
-git checkout slow-version
-npm install
-npm run dev
-\\\
+```plaintext
+http://localhost:5173
+```
 
-Then switch back to main:
-\\\ash
-git checkout main
-npm install
-\\\
+---
 
-### Production Build
+## Build for Production
 
-Build for production:
-\\\ash
+```bash
 npm run build
-\\\
+```
 
-This will:
-- Generate optimized JavaScript bundles with code splitting
-- Create \dist/\ directory with production assets
-- Generate \stats.html\ for bundle analysis
-- Output multiple JS chunks for efficient loading
+Preview production build:
 
-Preview production build locally:
-\\\ash
+```bash
 npm run preview
-\\\
+```
 
-## Docker Deployment
+---
 
-Build and run with Docker Compose:
-\\\ash
-docker compose up --build
-\\\
+## Docker Setup
 
-The app will be available at \http://localhost:3000\
+### Build Docker Image
 
-Custom port:
-\\\ash
-PORT=8080 docker compose up --build
-\\\
+```bash
+docker build -t news-aggregator .
+```
 
-Health check:
-\\\ash
-docker compose ps
-\\\
+### Run Container
+
+```bash
+docker run -p 3000:3000 news-aggregator
+```
+
+---
 
 ## Performance Optimizations
 
-### Implemented Optimizations
+This project demonstrates several optimization techniques:
 
-| Optimization | Impact |
-|---|---|
-| Parallel Fetching | Eliminates N+1 network waterfall |
-| List Virtualization | Reduces DOM size from 500+ to 20-50 nodes |
-| Memoization | Prevents unnecessary re-renders |
-| Dependency Trimming | Cherry-picked lodash imports |
-| Image Optimization | Compressed hero image with srcset |
-| Code Splitting | Lazy-loaded secondary features |
-| Bundle Analysis | Generated stats.html for visibility |
+- Lazy loading components
+- Image optimization
+- Efficient rendering
+- Bundle splitting
+- Memoization
+- Optimized API handling
+- Responsive rendering
+- Core Web Vitals improvements
 
-### Measuring Performance
+---
 
-Using Lighthouse:
-1. Open the app in Chrome
-2. Press F12 to open DevTools
-3. Go to the Lighthouse tab
-4. Click Analyze page load
-5. Check Core Web Vitals scores: LCP, INP, CLS
+## API Used
 
-Using Chrome DevTools Performance Panel:
-1. Open DevTools > Performance tab
-2. Record user interactions (filtering, sorting)
-3. Analyze flame chart for long tasks
-4. Identify bottlenecks
+Hacker News API:
 
-See PERFORMANCE.md for detailed results.
+https://github.com/HackerNews/API
 
-## Technologies Used
+---
 
-- React 18 - UI library
-- Vite 5 - Fast build tool
-- @tanstack/react-virtual - List virtualization
-- Lodash - Cherry-picked utilities
-- Docker & Docker Compose - Containerization
-- Rollup Plugin Visualizer - Bundle analysis
+## Future Improvements
 
-## Environment Variables
+- Infinite scrolling
+- Dark mode
+- Category filtering
+- Bookmark articles
+- User authentication
+- AI-powered article summarization
 
-Create a \.env\ file based on \.env.example\:
+---
 
-\\\
-PORT=3000
-VITE_HN_API_BASE=https://hacker-news.firebaseio.com/v0
-\\\
+## Author
 
-## Git Branches
+**V V Satya Sai Datta Manikanta**
 
-- \main\ - Optimized, production-ready version
-- \slow-version\ - Intentionally unoptimized baseline
+GitHub:
+https://github.com/gowthusaidatta
 
-Switch between branches:
-\\\ash
-git checkout slow-version
-git checkout main
-\\\
-
-## Testing Checklist
-
-- Hero image has width, height, and srcset attributes
-- Article list uses virtualization (DOM size < 50 nodes)
-- Production build generates multiple JS chunks
-- Bundle includes only cherry-picked lodash imports
-- Docker Compose deployment works with health checks
-- Fallback stories display when API is unavailable
-- Filtering and sorting remain responsive
+---
 
 ## License
 
-This project is part of the Partnr Performance Lab exercise.
-
-## Acknowledgments
-
-- Hacker News for the free API
-- React and Vite communities
-- Tanstack for the virtual scroller library
+This project is licensed under the MIT License.
