@@ -137,15 +137,14 @@ export default function App() {
     <div className="page-shell">
       <header className="hero">
         <img
-          src="/hero-optimized.svg"
-          srcSet="/hero-optimized.svg 1x, /hero-optimized-wide.svg 2x"
-          width="1600"
-          height="900"
-          alt="News desk collage"
-          className="hero-image"
           data-testid="hero-image"
+          src="/hero.webp"
+          srcSet="/hero-600.webp 600w, /hero.webp 1200w"
+          sizes="100vw"
+          width="1200"
+          height="630"
+          alt="HackerNews top stories"
           loading="eager"
-          decoding="async"
         />
         <div className="hero-copy">
           <p className="eyebrow">Partnr Logo</p>

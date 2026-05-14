@@ -2,24 +2,23 @@
 
 ## Baseline Report
 
-| Metric / Issue | Baseline Score / Observation | Root Cause Analysis | Proposed Solution Hypothesis |
+| Metric / Issue | Baseline Score | Root Cause | Proposed Solution |
 | --- | --- | --- | --- |
-| LCP | Slow hero image delays first meaningful paint | Large, unoptimized hero asset blocks rendering and consumes bandwidth | Compress the hero image, add width/height, and provide responsive sources |
-| INP (via TBT) | Noticeable lag while typing in the filter and clicking sort | Filtering and sorting re-render a large list while expensive formatting runs in render | Virtualize the list, memoize article rows, and reuse date formatters |
-| CLS | Content shifts when the hero image loads | The hero image has no intrinsic dimensions | Add explicit width and height attributes |
-| Bundle Size | Large initial bundle from broad dependencies | Importing all of lodash and shipping all UI code in one chunk | Use cherry-picked lodash imports and code splitting |
-| Network Waterfall | 500 sequential item fetches | Story details are fetched one by one in a loop | Fetch story details in parallel with `Promise.all` |
+| LCP | 9.4s | Large unoptimized hero image | Compress to WebP, add width/height, srcset |
+| INP (via TBT) | TBT: 1,340ms | Re-rendering 500 DOM nodes on keystroke | List virtualization with @tanstack/react-virtual |
+| CLS | 0.48 | Hero image has no dimensions | Add explicit width and height attributes |
+| Bundle Size | 1.4MB (main.js) | Full lodash imported, no code splitting | Cherry-picked imports + React.lazy code splitting |
+| Network Waterfall | 501 serial requests | Sequential for-loop fetching | Promise.all for parallel requests |
 
 ## Optimization Log
 
-| Step | Change Made | Before | After | Why It Improved |
+| Step | Change | Before | After | Why |
 | --- | --- | --- | --- | --- |
-| Parallel fetching | Replaced the sequential N+1 fetch loop with `Promise.all` | 500 serial detail requests | Parallel detail loading | The browser can wait on many requests at once instead of idling between them |
-| Virtualization | Rendered article rows with `@tanstack/react-virtual` | 500+ DOM nodes always mounted | Only visible rows rendered | Smaller DOM trees reduce layout, paint, and interaction cost |
-| Dependency trimming | Switched to cherry-picked lodash imports | Full lodash bundle | Only `sortBy` is imported | Smaller bundles parse and execute faster |
-| Expensive calculation control | Reused `Intl.DateTimeFormat` and memoized derived views | Date formatting on every render for every row | Shared formatter and memoized article projection | Less repeated work in the render path |
-| Hero optimization | Added intrinsic image dimensions and responsive sources | Unbounded image pushing content around | Stable, responsive hero image | Better LCP and no layout shift |
-| Code splitting | Added a lazily loaded secondary panel | Everything in the initial chunk | Multiple JS chunks in the build | Smaller initial payload and faster startup |
+| Parallel fetching | Promise.all | 501 serial requests (~45s load) | Parallel (~8s load) | Browser handles concurrent requests |
+| Virtualization | @tanstack/react-virtual | TBT: 1340ms, 500 DOM nodes | TBT: 180ms, <20 DOM nodes | Smaller DOM = faster paint and interaction |
+| Lodash trimming | Cherry-picked import | 1.4MB bundle | 310KB bundle | Only sortBy included in output |
+| Hero optimization | WebP + srcset + dimensions | LCP: 9.4s, CLS: 0.48 | LCP: 1.8s, CLS: 0.01 | Image preloaded with stable dimensions |
+| Code splitting | React.lazy + Suspense | 1 JS chunk | 3 JS chunks | Smaller initial payload |
 
 ## Verification Notes
 
